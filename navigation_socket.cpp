@@ -83,6 +83,7 @@ public:
 
     //TCP연결지향형이고 ipv4 도메인을 위한 소켓을 생성
     serv_sock=socket(PF_INET, SOCK_STREAM, 0);
+
     //주소를 초기화한 후 IP주소와 포트 지정
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family=AF_INET;
@@ -94,7 +95,7 @@ public:
       printf("bind error");
 
     //연결 대기열 5개 생성
-    if(listen(serv_sock, 5)==-1)
+    if(listen(serv_sock, 5) ==-1)
       printf("listen error");
 
     //클라이언트로부터 요청이 오면 연결 수락
@@ -151,7 +152,6 @@ public:
     close(serv_sock);
     iconv_close(iConv);
   }
-
   //초음파 센서 전진 확인 후 모터 구동 명령
   void ultra_to_motor(const std_msgs::Int16::ConstPtr& msg){
     if(msg->data == 11){
