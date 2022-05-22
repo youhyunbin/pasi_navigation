@@ -27,6 +27,5 @@ int main( int argc, char * argv[] )
         }
 
         iconv_close( iConv );
-
         return 0;
 }
