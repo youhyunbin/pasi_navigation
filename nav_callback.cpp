@@ -118,7 +118,6 @@ private:
   ros::Subscriber subArrivalMotor;
   ros::Subscriber subArrivalUltraSonicBackward;
 
-  //msgs
   std_msgs::Int16 Forward;
   std_msgs::Int16 Backward;
   std_msgs::Int16 First;
