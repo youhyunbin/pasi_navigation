@@ -1,10 +1,8 @@
-//Navigation
+#include <fstream>
+#include <iostream>
+
 #include "moveToGoal.h"
 #include <std_msgs/Int16.h>
-
-//File read & write
-#include <iostream>
-#include <fstream>
 
 using namespace std;
 
@@ -24,7 +22,7 @@ public:
   {
     while(ros::ok()){
       ifstream floors("/home/hyun/navigation/src/navigation/src/floor.txt");
-      for(i=0;i<16;i++){
+      for(i=0; i<16; i++){
         floors >> number[i];
       }
 
@@ -36,8 +34,11 @@ public:
         if(check == 1)
         {
           ROS_INFO("Moving to Shelf...");
+
           goalReached = moveToGoal(number[0],number[1],number[2],number[3]);
-          if(goalReached){
+
+          if(goalReached)
+          {
             ROS_INFO("Shelf reached!");
             Forward.data = 1;
             pubUltraSonic.publish(Forward);
@@ -52,6 +53,7 @@ public:
         {
           ROS_INFO("Moving to Station...");
           goalReached = moveToGoal(number[8],number[9],number[10],number[11]);
+
           if(goalReached){
             ROS_INFO("Station reached!");
             check = 0;
