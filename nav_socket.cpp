@@ -8,101 +8,62 @@ using namespace std;
 
 bool goalReached = false;
 
-class NavCall
+class Navsock
 {
 public:
-  NavCall()
+  Navsock()
   {
     pubUltraSonic = nh.advertise<std_msgs::Int16>("/ultra", 1);
-    pubMotor      = nh.advertise<std_msgs::Int16>("/motor", 1);
 
-    subArrivalUltraSonicForward  = nh.subscribe("/ultra_forward_arrival", 1, &NavCall::CheckArrivalUltraSonicForward, this);
-    subArrivalMotor              = nh.subscribe("/motor_arrival", 1, &NavCall::CheckArrivalMotor, this);
-    subArrivalUltraSonicBackward = nh.subscribe("/ultra_backward_arrival", 1, &NavCall::ArrivalUltraSonicBackward, this);
+    Move();
   }
 
-  void CheckArrivalUltraSonicForward(const std_msgs::Int16 rcvForwardResult)
+  void Move()
   {
-    ROS_INFO("Received : %d", rcvForwardResult.data);
-    if(rcvForwardResult.data == 2)
-    {
-      ifstream order("/home/hyun/navigation/src/navigation/src/order.txt");
-
-      int j;
-      int list[16];
-      int count = 0; int count1 = 0; int count2 = 0;
-      int k=0; int n=0; int t=0;
-
-      fill_n(list,16,0); // Initiate list to "0"
-
-      for (j=0;j<16;j++)
-      {
-        order >> list[j];
-        if(list[j] == 2) count++;
-        if(list[j] == 3) count1++;
-        if(list[j] == 4) count2++;
-      }
-
-      if(count != 0){
-        while(k < count){
-          First.data = 101;
-          pubMotor.publish(First);
-          sleep(5);
-          k++;
-        }
-      }
-
-      if(count1 != 0){
-        while(n < count1){
-          Second.data = 102;
-          pubMotor.publish(Second);
-          sleep(5);
-          n++;
-        }
-      }
-
-      if(count2 != 0){
-        while(t < count2){
-          Third.data = 103;
-          pubMotor.publish(Third);
-          sleep(5);
-          t++;
-        }
-      }
-      order.close();
-    }
-  }
-
-  void CheckArrivalMotor(const std_msgs::Int16 rcvMotorResult)
-  {
-    ROS_INFO("Received : %d", rcvMotorResult.data);
-    if(rcvMotorResult.data == 3)
-    {
-      Backward.data = 2;
-      pubUltraSonic.publish(Backward);
-    }
-  }
-
-  void ArrivalUltraSonicBackward(const std_msgs::Int16 rcvBackwardResult)
-  {
-    ROS_INFO("Received : %d", rcvBackwardResult.data);
-    if(rcvBackwardResult.data == 4)
-    {
+    while(ros::ok()){
       ifstream floors("/home/hyun/navigation/src/navigation/src/floor.txt");
-
-      int i;
-      double number[16];
-
-      for(i=0;i<16;i++)
-      {
+      for(i=0; i<16; i++){
         floors >> number[i];
       }
 
-      ROS_INFO("Moving to Packing Place");
-      goalReached = moveToGoal(number[4],number[5],number[6],number[7]);
-      if(goalReached){
-        ROS_INFO("Packing Place Reached");
+      ifstream socket("/home/hyun/navigation/src/navigation/src/socket.txt");
+      if(!socket.eof())
+      {
+        socket >> check;
+        if(check == 1)
+        {
+          ROS_INFO("Moving to Shelf...");
+
+          goalReached = moveToGoal(number[0],number[1],number[2],number[3]);
+
+          if(goalReached)
+          {
+            ROS_INFO("Shelf reached!");
+            Forward.data = 1;
+            pubUltraSonic.publish(Forward);
+            check = 0;
+            remove("/home/hyun/navigation/src/navigation/src/socket.txt");
+            ofstream fout("/home/hyun/navigation/src/navigation/src/socket.txt", ios::trunc);
+            fout.close();
+          }
+        }
+
+        else if(check == 9)
+        {
+          ROS_INFO("Moving to Station...");
+          goalReached = moveToGoal(number[8],number[9],number[10],number[11]);
+
+          if(goalReached){
+            ROS_INFO("Station reached!");
+            check = 0;
+            remove("/home/hyun/navigation/src/navigation/src/socket.txt");
+            ofstream fout("/home/hyun/navigation/src/navigation/src/socket.txt", ios::trunc);
+            fout.close();
+          }
+        }
       }
+      floors.close();
+      socket.close();
     }
   }
 
@@ -111,30 +72,27 @@ private:
 
   //Publisher
   ros::Publisher pubUltraSonic;
-  ros::Publisher pubMotor;
 
-  //Subscriber
-  ros::Subscriber subArrivalUltraSonicForward;
-  ros::Subscriber subArrivalMotor;
-  ros::Subscriber subArrivalUltraSonicBackward;
-
-  //msgs
   std_msgs::Int16 Forward;
-  std_msgs::Int16 Backward;
-  std_msgs::Int16 First;
-  std_msgs::Int16 Second;
-  std_msgs::Int16 Third;
+
+  int i, j;
+  double number[16];
+  int check;
 };
 
 
-int main(int argc, char** argv){
+int main(int argc, char **argv)
+{
   //Initiate ROS
-  ros::init(argc, argv, "nav_callback");
+  ros::init(argc, argv, "nav_socket");
 
-  ROS_INFO("Navigation_Callback connected");
+  ROS_INFO("Navigation_Socket connected");
 
-  //Create an object of class Navcall
-  NavCall navCall;
+  ofstream fout("/home/hyun/navigation/src/navigation/src/socket.txt", ios::trunc);
+  fout.close();
+
+  //Create an object of class Navsock
+  Navsock navsock;
 
   ros::spin();
 
